@@ -303,7 +303,7 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 	EGLint major, minor;
 
 	static const EGLint context_attribs[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 2,
+		EGL_CONTEXT_CLIENT_VERSION, 3,
 		EGL_NONE
 	};
 
@@ -314,7 +314,6 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 		EGL_BLUE_SIZE, 1,
 		EGL_ALPHA_SIZE, 0,
 		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-		EGL_SAMPLES, samples,
 		EGL_NONE
 	};
 	const char *egl_exts_client, *egl_exts_dpy, *gl_exts;
@@ -337,9 +336,11 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 	get_proc_client(EGL_EXT_platform_base, eglGetPlatformDisplayEXT);
 
 	if (egl->eglGetPlatformDisplayEXT) {
+		printf("Get platform display\n");
 		egl->display = egl->eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR,
 				gbm->dev, NULL);
 	} else {
+		printf("Get default display\n");
 		egl->display = eglGetDisplay((void *)gbm->dev);
 	}
 
@@ -382,14 +383,17 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 		return -1;
 	}
 
+	printf("Config: %d\n", egl->config);
+
 	egl->context = eglCreateContext(egl->display, egl->config,
 			EGL_NO_CONTEXT, context_attribs);
-	if (egl->context == NULL) {
+	if (egl->context == EGL_NO_CONTEXT) {
 		printf("failed to create context\n");
 		return -1;
 	}
 
 	if (!gbm->surface) {
+		printf("EGL withouth surface\n");
 		egl->surface = EGL_NO_SURFACE;
 	} else {
 		egl->surface = eglCreateWindowSurface(egl->display, egl->config,
@@ -401,7 +405,10 @@ int init_egl(struct egl *egl, const struct gbm *gbm, int samples)
 	}
 
 	/* connect the context to the surface */
-	eglMakeCurrent(egl->display, egl->surface, egl->surface, egl->context);
+	if (eglMakeCurrent(egl->display, egl->surface, egl->surface, egl->context) == EGL_FALSE) {
+		printf("Failed to attach EGL rendering context to EGL surfaces\n");
+		return -1;
+	}
 
 	gl_exts = (char *) glGetString(GL_EXTENSIONS);
 	printf("OpenGL ES 2.x information:\n");

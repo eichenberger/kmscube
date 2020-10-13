@@ -37,6 +37,8 @@
 GST_DEBUG_CATEGORY(kmscube_debug);
 #endif
 
+const void test(const struct gbm *gbm, int samples);
+
 static const struct egl *egl;
 static const struct gbm *gbm;
 static const struct drm *drm;
@@ -205,9 +207,15 @@ int main(int argc, char *argv[])
 		printf("failed to initialize GBM\n");
 		return -1;
 	}
-
+#if 0
 	if (mode == SMOOTH)
 		egl = init_cube_smooth(gbm, samples);
+#else
+	if (mode == SMOOTH) {
+		test(gbm, samples);
+		return 0;
+	}
+#endif
 	else if (mode == VIDEO)
 		egl = init_cube_video(gbm, video, samples);
 	else if (mode == SHADERTOY)

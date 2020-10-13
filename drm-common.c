@@ -259,6 +259,8 @@ int init_drm(struct drm *drm, const char *device, const char *mode_str,
 		for (i = 0; i < connector->count_modes; i++) {
 			drmModeModeInfo *current_mode = &connector->modes[i];
 
+			printf("Mode: %s\n", current_mode->name);
+
 			if (strcmp(current_mode->name, mode_str) == 0) {
 				if (vrefresh == 0 || current_mode->vrefresh == vrefresh) {
 					drm->mode = current_mode;
